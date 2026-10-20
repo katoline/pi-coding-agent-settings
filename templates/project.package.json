@@ -1,0 +1,17 @@
+{
+  "name": "new-project",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "scripts": {
+    "check": "biome check . && tsc --noEmit && node scripts/require-tests.mjs",
+    "format": "biome check --write .",
+    "test": "node scripts/require-tests.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.6",
+    "@types/node": "24.10.0",
+    "typescript": "5.9.3"
+  }
+}

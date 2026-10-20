@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "checks": [["npm", "run", "check"]],
+  "protectedBranches": ["main", "master"],
+  "remote": "origin",
+  "baseBranch": "main",
+  "maxDelegations": 6,
+  "timeoutSeconds": 900,
+  "models": {
+    "scout": null,
+    "planner": null,
+    "worker": null,
+    "reviewer": null
+  }
+}

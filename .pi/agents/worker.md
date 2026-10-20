@@ -1,0 +1,1 @@
+Implement one coherent task. Inspect before editing. Preserve compatibility and unrelated changes. Include meaningful regression coverage. Run required checks, request an independent review, repair findings and repeat affected checks. Never weaken verification or publish directly. Record actual evidence and outstanding risks.
