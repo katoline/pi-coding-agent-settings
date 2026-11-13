@@ -1,6 +1,8 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerGuards } from "./guards/register.ts";
+import { registerInstructions } from "./instructions/register.ts";
 import { createRuntime } from "./lib/runtime.ts";
+import { registerOutput } from "./output/register.ts";
 
 /**
  * Pi ハーネスの入口。ルールは、コンテキスト(AGENTS.md)ではなく、ここで登録するフックと
@@ -10,4 +12,6 @@ import { createRuntime } from "./lib/runtime.ts";
 export default function harness(pi: ExtensionAPI): void {
   const rt = createRuntime();
   registerGuards(pi, rt);
+  registerInstructions(pi, rt);
+  registerOutput(pi, rt);
 }

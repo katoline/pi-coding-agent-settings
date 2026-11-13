@@ -4,6 +4,20 @@ import path from "node:path";
 import { type HarnessConfig, loadConfig } from "./config.ts";
 import type { FsProbe } from "./types.ts";
 
+/** 1 回の依頼(ユーザーの入力から、応答が終わるまで)の間の状態 */
+export class RunState {
+  /** ファイルを変更した、または commit・PR など、成果物を作る操作をした */
+  touched = false;
+  /** 確定した計画があり、すべての項目が済んだ(完了報告を出した) */
+  planCompleted = false;
+  /** 計画の、未着手・進行中の項目の数(計画のモジュールが差し替える) */
+  openItems: () => number = () => 0;
+
+  resetForNewPrompt(): void {
+    this.touched = false;
+  }
+}
+
 /** ハーネス全体で共有する、実行時の事実 */
 export interface Runtime {
   config: HarnessConfig;
@@ -15,6 +29,7 @@ export interface Runtime {
   tmpdir: string;
   /** このハーネスが作った worktree の絶対パス */
   ownedWorktrees: Set<string>;
+  run: RunState;
 }
 
 export function createRuntime(env: NodeJS.ProcessEnv = process.env): Runtime {
@@ -26,6 +41,7 @@ export function createRuntime(env: NodeJS.ProcessEnv = process.env): Runtime {
     home,
     tmpdir: env.TMPDIR || tmpdir(),
     ownedWorktrees: new Set(),
+    run: new RunState(),
   };
 }
 
