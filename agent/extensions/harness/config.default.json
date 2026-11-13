@@ -11,5 +11,6 @@
     "maxConcurrency": 4,
     "timeoutSeconds": 900,
     "maxTotal": 64
-  }
+  },
+  "compactionModel": ""
 }

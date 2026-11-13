@@ -17,6 +17,7 @@ export const config: HarnessConfig = {
   defaultBranches: ["main", "master"],
   dropContextFiles: false,
   selectModelOnStartup: true,
+  compactionModel: "",
   subagent: { maxTasks: 8, maxConcurrency: 4, timeoutSeconds: 900, maxTotal: 64 },
 };
 

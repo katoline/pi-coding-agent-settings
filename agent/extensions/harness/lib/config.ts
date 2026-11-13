@@ -18,6 +18,8 @@ export interface HarnessConfig {
   dropContextFiles: boolean;
   /** 起動時に、メインのモデルを選ばせる */
   selectModelOnStartup: boolean;
+  /** 要約(compact)に使うモデル(`provider/id`)。空なら、いま使っているモデル */
+  compactionModel: string;
   subagent: {
     /** 一度に任せられる件数 */
     maxTasks: number;
