@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import {
   existsSync,
   lstatSync,
@@ -150,21 +150,62 @@ test("install.sh: --dry-run は何も作らない", () => {
   assert.ok(!existsSync(dir));
 });
 
-test("リンクされた拡張が、実際の Pi で読み込める(設定ディレクトリごと)", () => {
+test("リンクされた拡張が、実際の Pi に自動で読み込まれ、コマンドが登録される", async () => {
   const dir = path.join(tmp, "agent4");
   assert.equal(runInstall(dir).status, 0);
   writeFileSync(path.join(dir, "harness.json"), JSON.stringify({ selectModelOnStartup: false }));
   const cli = path.join(root, "node_modules/@earendil-works/pi-coding-agent/dist/cli.js");
-  const out = execFileSync(process.execPath, [cli, "--offline", "--list-models"], {
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      PI_CODING_AGENT_DIR: dir,
-      PI_OFFLINE: "1",
-      ANTHROPIC_API_KEY: "dummy",
-      OPENCODE_API_KEY: "dummy",
+  const proc = spawn(
+    process.execPath,
+    [
+      cli,
+      "--mode",
+      "rpc",
+      "--offline",
+      "--no-session",
+      "--no-skills",
+      "--no-prompt-templates",
+      "--no-mcp",
+    ],
+    {
+      env: {
+        ...process.env,
+        PI_CODING_AGENT_DIR: dir,
+        PI_OFFLINE: "1",
+        ANTHROPIC_API_KEY: "dummy",
+      },
+      stdio: ["pipe", "pipe", "pipe"],
     },
-  });
-  assert.match(out, /claude-opus-5-5/);
-  assert.match(out, /opencode-go\s+deepseek-v4\.1-flash/);
+  );
+  try {
+    const names = await new Promise<string[]>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("get_commands の応答がありません")), 30_000);
+      let buffer = "";
+      proc.stdout.on("data", (chunk: Buffer) => {
+        buffer += chunk.toString();
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          try {
+            const ev = JSON.parse(line) as {
+              command?: string;
+              data?: { commands?: { name: string }[] };
+            };
+            if (ev.command === "get_commands") {
+              clearTimeout(timer);
+              resolve((ev.data?.commands ?? []).map((c) => c.name));
+            }
+          } catch {
+            // JSON でない行は無視する
+          }
+        }
+      });
+      proc.stdin.write(`${JSON.stringify({ type: "get_commands" })}\n`);
+    });
+    for (const command of ["models", "subagent-model", "plan", "usage"]) {
+      assert.ok(names.includes(command), `/${command} が登録されているはず`);
+    }
+  } finally {
+    proc.kill("SIGTERM");
+  }
 });
