@@ -1,0 +1,16 @@
+{
+  "workRoots": ["~/Dev/kaishi", "~/Dev/seino914", "~/Dev/hobby", "~/orca/workspaces"],
+  "tempRoots": ["$TMPDIR", "/tmp/claude-*"],
+  "protectedGlobalPaths": ["~/Dev/kaishi/ubuntu-dotfiles"],
+  "protectedHarnessPaths": ["~/.pi/agent"],
+  "defaultBranches": ["main", "master"],
+  "dropContextFiles": false,
+  "selectModelOnStartup": true,
+  "subagent": {
+    "maxTasks": 8,
+    "maxConcurrency": 4,
+    "timeoutSeconds": 900,
+    "maxTotal": 64
+  },
+  "compactionModel": ""
+}

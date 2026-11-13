@@ -1,0 +1,13 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # Pi 本体は更新が速く、拡張が依存する内部 API が変わりうる。自動で上げず、手動で更新する。
+    ignore:
+      - dependency-name: "@earendil-works/*"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -1,112 +1,103 @@
-# Pi Coding Agent harness
+# pi-coding-agent-settings
 
-インストール済みの Pi を前提とした、役割分担・独立レビュー・品質ゲート付き開発ハーネスです。Pi 1.3.0 / Node 24 系で検証します。現在のパッケージ名は `@earendil-works/pi-coding-agent` です。
+[Pi coding agent](https://pi.dev/) のハーネス(拡張・スキル・サブエージェントの役割・設定)を、Ubuntu PC で一から作り込み、管理するためのリポジトリです。
+
+## 基本方針
+
+**ルールは「コンテキスト」ではなく「ハーネス」で管理します。** 作業のルールは `AGENTS.md` に書かず、Pi の拡張のフックとツールとして実装し、仕組みで守らせます。コンテキストに書いたルールは守られ方が毎回ぶれ(非決定論)、ハーネスで強制すれば毎回同じ動きになる(決定論)ためです。
+
+| 種類 | 実装 |
+|---|---|
+| **仕組みで止める・強制するもの** | `tool_call` のガード(Git、削除・プロセス、インストール、秘密情報)。**例外が起きたら必ず拒否する(fail-closed)** |
+| **流れとして組み込むもの** | 計画 → 実行 → 検証 → 直して再確認 → PR・マージの自律ループ(`agent_before_settle` で継続) |
+| **固定の指示として渡すもの** | 日本語の指示を、拡張が、システムプロンプトの名前つきセクション(`<harness>`)に渡す |
+
+## できること
+
+### コマンド
+| コマンド | 内容 |
+|---|---|
+| `/models` | メインのモデルを選ぶ(OpenCode Go / Anthropic API の Opus 5.5・Sonnet 5.5・Fable 5.2・Haiku 5.5 / Codex)。起動時にも選ぶ |
+| `/subagent-model` | サブエージェントのモデルを切り替える(既定: OpenCode Go の DeepSeek V4.1 Flash。`reset` で戻す) |
+| `/plan` | 計画の状況。`/plan resume` で再開、`/plan stop` で止める |
+| `/usage` | 利用状況(Anthropic API の使用額、Go・Codex の使用率) |
+
+### ツール(モデルが使う)
+| ツール | 内容 |
+|---|---|
+| `ask_user` | Plan の段階で、要件と判断をユーザーと確認する。**計画の確定後は、ツールから外れる(質問せずに進める)** |
+| `plan_propose` / `plan_update` / `plan_note` / `plan_status` / `plan_report` | 完了条件つきのチェックリスト。**完了は、根拠・検証・レビューのゲートを通ったときだけ**。報告は状態から自動で作る |
+| `harness_verify` | プロジェクトの検証コマンドを実行(`.harness/verify.json` → `check` → lint・typecheck・test・build)。無ければ「未検証」 |
+| `harness_review` | 差分と要件だけを渡した、新しいコンテキストの読み取り専用のレビュー。マーカーがなければ承認としない |
+| `subagent` | 独立した `pi` の子プロセスに任せる(並列可。表示は「⏳ サブエージェント（…）で…を実行中」「✅ …が完了」) |
+| `harness_worktree` / `harness_pr_create` / `harness_pr_merge` / `harness_ensure_protection` | Git・GitHub の書き込みの専用ツール(メインセッションだけ) |
+
+### 自律ループ
+確定した計画に未完了の項目がある間、ユーザーに質問せずに続けます。止まる条件: 完了、中断(Esc)、キルスイッチ(`<設定ディレクトリ>/harness-off` ファイル)、継続回数・経過時間の上限、進捗のない状態の連続。項目ごとの差し戻しが **3 周で収まらない場合は、止まらずに「未完了」にして、他の項目を進め**、最後に報告します。最終応答の最後の 1 行は、必ず「🚀作業が完了しました！」になります。
+
+### ガードの概要
+- **Git:** 既定ブランチへの直接の commit・push・merge、force push、`--no-verify`、マージ済みでないリモートブランチの削除を拒否。reset --hard・clean・rebase・amend などは、ユーザーの許可制。commit・push・PR・マージは、サブエージェントからは拒否
+- **削除・プロセス:** 削除は、作業ルートと一時領域の内側だけ(変数・コマンド置換で組み立てたパス、`cd` との組み合わせ、`xargs` 経由は拒否)。`pkill` / `killall` は拒否、`kill` は PID 指定と `kill $(lsof -ti :ポート)` だけ
+- **インストール:** `sudo` は実行させない。`apt`・`npm install -g`・`nix profile`・`home-manager switch` などは許可制。グローバル環境(ubuntu-dotfiles)の変更も許可制
+- **秘密情報:** `.env`・秘密鍵・トークンの読み取り・出力・コミットを拒否し、ツールの出力から秘密を秘匿する
+- **ブランチ保護:** 初めての push の前に、GitHub の既定ブランチが保護されているかを確認し、なければ(確認のうえ)ルールセットを作る
 
 ## 導入
 
-macOS / Linux、Pi、Docker Engine または Docker Desktop、Git、GitHub CLI が必要です。Nix は開発ツールを固定する場合に使用します。Windows は WSL2 上で利用してください。
-
-この設定リポジトリは **編集対象のプロジェクトと別の場所** に置いてください。信頼する実行コードとして扱うため、自分自身を作業エージェントに編集させる起動は拒否します。
+前提: Node.js 22.19 以上、Pi(npm グローバル。版は固定して、手動で更新する。[docs/install-npm-global.md](docs/install-npm-global.md))、`git`、`gh`。
 
 ```bash
-cd /path/to/pi-coding-agent-settings
-nix develop                 # Nix を使用する場合。なくても Node >=22.19 で次に進めます
-npm ci --ignore-scripts
-npm run check
-node scripts/harness.mjs build
+git clone https://github.com/katoline/pi-coding-agent-settings
+cd pi-coding-agent-settings
+npm ci --ignore-scripts   # 開発用(テスト・型検査)。配置だけなら不要
+scripts/install.sh --dry-run
+scripts/install.sh
 ```
 
-Pi CLI は PC にあるものを前提に起動確認します。サンドボックス内では Dockerfile の Pi 1.3.0 を使用し、ホストと分離します。ホストのグローバル Pi 設定・拡張・MCP・SSH・GitHub トークンは取り込みません。
+`scripts/install.sh` は、拡張・役割・スキル・設定を、`~/.pi/agent`(または `PI_CODING_AGENT_DIR`)に**シンボリックリンク**で配置します。既存のファイルは上書きせず、競合として失敗します。`auth.json`(API キー・OAuth トークン)には触れず、このリポジトリにも置きません。
 
-Pi の認証ファイルから **必要なモデルプロバイダーだけを含む専用 auth.json** を用意し、次のようにパスを設定してください。値をこのリポジトリへコピーしないでください。OAuth 更新が必要な場合はホスト Pi で更新してください。コンテナ内では読み取り専用です。
+### 設定の上書き
+`<Pi の設定ディレクトリ>/harness.json` で、[config.default.json](agent/extensions/harness/config.default.json) の値を上書きできます(作業ルート、保護するパス、起動時のモデル選択、サブエージェントの上限、要約のモデルなど)。
 
-```bash
-export PI_HARNESS_AUTH_FILE=/absolute/path/to/provider-only-auth.json
+## 構成
+
 ```
-
-`harness.config.json` の `models` は、`pi --list-models` で使える実際のモデル ID に設定します。`null` は既定モデルを利用します。利用不能なモデルを自動的に他へ置換しません。調査は高速モデル、設計・レビューは高精度モデル、といった配分にできます。別プロバイダーも、その認証があれば指定できます。
-
-## 既存プロジェクトで作業
-
-対象は npm プロジェクトが既定です。対象側に以下を用意してください。
-
-- `.gitignore` に `.harness/`。作業記録・PR メタデータをコミットしないためです。
-- `package-lock.json` と、Biome・型チェック・意味のあるテスト・必要なビルドを実行する `npm run check`。
-- `AGENTS.md` に要求・受け入れ条件・既存システムの制約。秘密値は書かないでください。
-- GitHub に `Quality` という名前の workflow。push イベントでも動かし、検証が成功したときだけ workflow 全体が成功するようにします。このリポジトリの `.github/workflows/quality.yml` が例です。
-
-```bash
-cd /path/to/target-project
-git switch -c agent/my-feature
-# 動作確認だけ。Git への書き込みはしません
-node /path/to/pi-coding-agent-settings/scripts/harness.mjs run "$PWD" '受け入れ条件を含む実装依頼'
+agent/                         ~/.pi/agent に配置するもの
+├── extensions/harness/        ハーネス本体(拡張)
+│   ├── guards/                仕組みで止めるもの(git・fs・install・secrets と、Pi への接続)
+│   ├── flow/                  計画・自律ループ・検証・レビュー・PR・マージ・worktree
+│   ├── subagent/              サブエージェント(別プロセス方式)
+│   ├── models/  usage/  compaction/  output/  instructions/  lib/
+│   └── config.default.json
+├── agents/                    scout / planner / worker / reviewer(日本語)
+├── skills/nix-setup/          Nix + Biome + Dependabot + CI を 1 つにしたスキル
+└── settings.json              enabledModels
+scripts/install.sh             配置スクリプト
+tests/                         ユニットテストと、実際の Pi を使う統合テスト
+docs/                          設計資料・決定記録・調査
 ```
-
-この起動は raw shell を渡しません。ファイル調査・編集、読み取り専用の調査/計画/レビュー委譲、設定済みの検証コマンドを利用します。子プロセスにも同じコンテナ制限が適用されます。起動時にはコンテナ専用の一時 node_modules に `npm ci --ignore-scripts` を実行します。ホスト側の node_modules は共有せず、macOS/Linux の依存関係の混在を避けます。起動ごとにインストールするため、その時間も実行予算に含まれます。
-
-`harness.config.json` の `checks` は shell 文字列ではなく argv 配列です。既存サービスの言語、ビルド、結合テストに合わせて信頼する設定側で調整します。既定の隔離検証は `npm ci --ignore-scripts` の後に指定コマンドを実行します。ネイティブ依存のビルドスクリプトや外部 DB が必須のサービスには、レビュー済みの検証用イメージ・サービス構成を追加してください。必要な検証を削って対応しないでください。
-
-## 実装から PR まで自動実行
-
-**次のコマンドは commit・push・PR 作成/更新を実行します。** 開始時に対象の作業ツリーが clean であることが必須です。
-
-```bash
-node /path/to/pi-coding-agent-settings/scripts/ship.mjs /path/to/target-project '実装依頼と受け入れ条件'
-```
-
-処理順序は次の通りです。
-
-1. 調査・計画 → 実装 → ローカル検証 → 独立レビュー。
-2. エージェントが `.harness/publish.json` に、コミット単位・対象パス・PR タイトル/説明を記録。
-3. ホスト側が全変更の過不足と重複を検査し、各コミットについて **ステージ済みツリーを一時ディレクトリに展開**。
-4. 隔離コンテナで依存関係を再インストールし、検証と別コンテキストの読み取り専用レビューを実施。明示的な `Verdict: PASS` が必須。
-5. 検証済みツリーと index が一致するときだけコミット。中間コミットも検証必須。
-6. HEAD を再検証・再レビューし、`origin` の同名 `agent/*` ブランチへ明示的 refspec で push。
-7. その SHA の push に対する `Quality` CI 成功を待ち、PR 作成/更新。説明は管理マーカー内だけを更新し、外側の人間の追記を保持。
-
-失敗時は処理を停止します。作成済みコミットや push を自動で取り消しません。エラーと作業ツリーを確認して該当段階から再開してください。モデルのレビューは品質保証の証明ではありません。GitHub 側の人間のレビューも併用してください。
-
-手動で段階ごとに実行する場合:
-
-```bash
-cd /path/to/target-project
-git add -- src/example.ts tests/example.test.ts
-node /path/to/pi-coding-agent-settings/scripts/git-guard.mjs commit 'feat: add example behavior'
-node /path/to/pi-coding-agent-settings/scripts/git-guard.mjs push
-node /path/to/pi-coding-agent-settings/scripts/git-guard.mjs pr 'Add example behavior' /path/to/pr-body.md
-# 既存 PR を更新する場合は pr-update。body-file は人間の追記を含めた全文です。
-```
-
-`gh auth login` はホスト側で行います。モデルのプロバイダー認証とは別です。origin は単一の github.com HTTPS/SSH URL、作業ブランチは `agent/*` のみ対応します。force push・main/master/default branch への操作、リモートブランチ削除は提供しません。リンクされた Git worktree は未対応です。並列実行で同じ作業ツリーを変更しないでください。
-
-## 安全性の境界
-
-- Docker は root filesystem を読み取り専用にし、特権と capability を落とし、書き込み可能なホスト領域を対象プロジェクトだけに限定します。`.git` は読み取り専用の別 mount です。一時ファイルはコンテナ内 `/tmp` にあります。
-- ファイルツールも実パスを検査し、外部・symlink 経由・Git metadata への書き込みを拒否します。このチェック単独は OS サンドボックスの代わりではありません。
-- 認証ファイルの読み取りはモデルプロセスに必要です。信頼しない拡張・コードに秘密を渡さないでください。ネットワークはモデル API・npm 用に有効で、宛先制限はこの実装の対象外です。
-- 生の `pi` をホストで起動したり、手動で `git push` した場合、このハーネスのガードは適用されません。ローカル管理者による迂回を阻止する仕組みではありません。
-- **GitHub Rulesets は別途必須**です。main/master/default branch の直接 push・force push・削除を禁止し、PR、required status `quality`、レビューを必須にしてください。エージェント・管理者の bypass も確認してください。このリポジトリを置くだけでは GitHub の保護は有効になりません。
-- CI ファイルやポリシーを変更できる主体は検証も弱められます。実際のチーム名で CODEOWNERS を設定し、ポリシー変更に人間の承認を要求してください。
-
-## 新規プロジェクト
-
-空のプロジェクトへ設定を生成できます（既存ファイルは上書きしません）。
-
-```bash
-node /path/to/pi-coding-agent-settings/scripts/init-project.mjs /path/to/new-project
-```
-
-アプリの仕様は生成しません。ソースと実際の回帰テストを追加し、`nix develop` 内で初回 `npm install --ignore-scripts` を実行して lockfile を作成してください。テストがない状態では検証を拒否します。
-
-`templates/project-checklist.md` に Nix・Biome・CI・権限設定の導入項目があります。`flake.nix` / `flake.lock`、`biome.json`、Quality workflow を土台にして、プロジェクト固有の package.json と実際のテストを追加してください。Nix と言語側 lockfile は両方コミットします。既存サービスのツールチェーンを無条件に置き換えないでください。
 
 ## 開発と検証
 
 ```bash
-npm ci --ignore-scripts
-npm run check
+npm run check   # biome + tsc + テスト(統合テストを含む)
 ```
 
-テストは保護ブランチ、CI の SHA/イベント/成功判定、パス逸脱、symlink、ツール制限、レビュー権限、PR 説明の保持を確認します。Docker の隔離は実機スモークテストでも確認します。プロバイダー認証が必要なモデル呼び出しと実際の GitHub 書き込みは、利用者の PC と対象リポジトリで別途確認してください。
+統合テスト(`tests/e2e.test.ts`)は、実際の Pi 1.5.2 を RPC モードで起動し、偽のモデル(OpenAI 互換のローカルサーバー)に台本どおりのツール呼び出しをさせて、ガードの拒否、計画の確定、自律ループの継続、サブエージェントの子プロセス、最終行を通しで確かめます。ネットワークは使いません。
 
-参考: [Pi 公式](https://github.com/earendil-works/pi)、[公式 subagent 例](https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/subagent)、[Armin Ronacher の agent-stuff](https://github.com/mitsuhiko/agent-stuff)。公開拡張の一括導入や自動信頼は行いません。
+## 未実装・未検証(正直な現状)
+
+- **サンドボックスは未実装です。** bash はホストで動き、ガードは、コマンドの文字列の検査です。`python -c` やスクリプト経由の間接実行は検査をすり抜けます。**OS・VM の境界の代わりにはなりません。** 方式の検討は [docs/sandbox-options.md](docs/sandbox-options.md)、[docs/research/sandbox-practices.md](docs/research/sandbox-practices.md)(公式の `sandbox/` サンプルは Pi 1.5.0 で削除済み。現在の公式は Gondolin / Docker 系)
+- 実際の LLM、実際の GitHub(ルールセットの作成、PR、マージ)、Go・Codex の使用率の取得(非公式のエンドポイント)は、**実機では未検証**です。応答の形は、既存パッケージのソースで確認し、パーサーはユニットテストしています
+- 独立レビューは、レビュー担当が末尾のマーカーを書く前提です。差分の中の指示に従わせない指示はありますが、プロンプトインジェクションへの完全な対策ではありません
+- サブエージェントの方式は、別プロセス方式(暫定)です([docs/subagent-design.md](docs/subagent-design.md))
+
+## 設計資料
+
+| 資料 | 内容 |
+|---|---|
+| [docs/source/pi-harness-requirements.md](docs/source/pi-harness-requirements.md) | 要件の原文 |
+| [docs/decisions/](docs/decisions/) | 決定記録(1 件 1 ファイル) |
+| [docs/open-questions.md](docs/open-questions.md) | 未決事項 |
+| [docs/feasibility-assessment.md](docs/feasibility-assessment.md) | 要件と Pi の公式ドキュメントの照合 |
+| [docs/research/](docs/research/) | 先行事例の調査(自律ループ・実践者・サンドボックス・公開されているハーネス) |

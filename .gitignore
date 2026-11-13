@@ -3,5 +3,7 @@ node_modules/
 .env
 .env.*
 !.env.example
-result
+auth.json
+*.local.json
 .direnv/
+result
