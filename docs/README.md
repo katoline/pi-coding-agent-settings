@@ -12,6 +12,7 @@ Pi coding agent を使ったハーネス設計について、対話しながら�
 - 未決事項は `open-questions.md` で管理する
 
 ## 資料
+- [learning/](learning/): **学習教材**。ハーネスの各機能の、実装・理由・Claude Code との比較。oh-my-pi を試す手順
 - [research/](research/): 先行事例の調査(自律ループ、実践者、サンドボックス、公開されているハーネス、Claude Code と Pi のサブエージェントの違い、OpenCode を改造する案との比較)
 - [sandbox-candidates.md](sandbox-candidates.md): サンドボックスの 2 つの候補(Gondolin と bubblewrap 系)の詳しい説明と比較
 - [repo-redesign-plan.md](repo-redesign-plan.md): このリポジトリの刷新計画(旧設計との差、引き継ぐもの・捨てるもの、新しい構成案、作業の段階)
