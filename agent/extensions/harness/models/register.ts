@@ -73,7 +73,8 @@ export function registerModels(pi: ExtensionAPI, rt: Runtime): void {
       ctx.sessionManager.getBranch(),
       SUBAGENT_MODEL_ENTRY,
     );
-    rt.subagentModel = saved?.model && parseRef(saved.model) ? saved.model : SUBAGENT_DEFAULT;
+    rt.subagentModel =
+      saved?.model && parseRef(saved.model) ? saved.model : rt.subagentModelDefault;
   };
 
   pi.registerCommand("subagent-model", {
@@ -81,7 +82,7 @@ export function registerModels(pi: ExtensionAPI, rt: Runtime): void {
     handler: async (args: string, ctx: ExtensionCommandContext) => {
       const arg = args.trim();
       let next: string | null;
-      if (arg === "reset") next = SUBAGENT_DEFAULT;
+      if (arg === "reset") next = rt.subagentModelDefault;
       else if (arg) next = parseRef(arg) ? arg : null;
       else {
         const ref = await pickModel(ctx, "サブエージェントのモデル");

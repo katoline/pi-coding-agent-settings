@@ -34,6 +34,8 @@ export interface Runtime {
   run: RunState;
   /** サブエージェントのモデル(`provider/id`)。`/subagent-model` で変える */
   subagentModel: string;
+  /** 既定のサブエージェントのモデル(`/subagent-model reset` と、保存がないときに戻る先。環境変数 PI_SUBAGENT_MODEL で上書きできる) */
+  subagentModelDefault: string;
   /** Pi の設定ディレクトリ(`PI_CODING_AGENT_DIR`。既定は ~/.pi/agent) */
   agentDir: string;
   /** このセッションで起動したサブエージェントの数 */
@@ -55,6 +57,7 @@ export function createRuntime(env: NodeJS.ProcessEnv = process.env): Runtime {
     ownedWorktrees: new Set(),
     run: new RunState(),
     subagentModel: env.PI_SUBAGENT_MODEL || SUBAGENT_DEFAULT,
+    subagentModelDefault: env.PI_SUBAGENT_MODEL || SUBAGENT_DEFAULT,
     agentDir: env.PI_CODING_AGENT_DIR || path.join(home, ".pi", "agent"),
     subagentSpawns: 0,
     childCost: 0,
