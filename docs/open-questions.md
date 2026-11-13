@@ -11,6 +11,12 @@
 - [ ] ubuntu-dotfiles との関係(このリポジトリを設定の正本にするか、dotfiles に統合するか)
 - [ ] 刷新後の既定ブランチ名(現在は `agent/bootstrap-harness`)
 
+## v1 の実装後に残っている論点(decisions/012)
+- [ ] **サンドボックスの導入**(最優先。ガードは文字列の検査で、OS・VM の境界の代わりにならない)
+- [ ] 実際の LLM・GitHub(ルールセット、PR、マージ)・Go・Codex の使用率での、実機の検証
+- [ ] `harness_review` を実際の LLM で回した結果の確認(マーカーの出力、差分の大きさ)
+- [ ] 音声入力の導入(決定記録 005。このリポジトリの対象外)
+
 ## 実現可能性の評価から出た論点(feasibility-assessment.md 参照)
 ### サブエージェント(subagent-design.md / decisions/009: 保留)
 - [ ] 方式(A: 公式サンプル改造 / B: pi-subagents / C: SDK 自作)。保留。A を暫定の前提とする
@@ -36,9 +42,7 @@
 ### その他
 - [ ] Codex の使用率: `/login openai-codex`(従来のログイン)を使うか、Codex CLI を併用するか
 - [ ] 使用率の拡張の選定(導入前にソースを確認)
-- [ ] Anthropic の新モデル(Fable 5.2 等)が Pi の内蔵カタログにあるか(`pi --list-models`)
-- [ ] 実装の順序
-- [ ] 資料から MacBook 側(#114)の記述を削除する(不要と確定)
+- [x] Anthropic の新モデルが Pi の内蔵カタログにあるか → 1.5.2 で、claude-opus-5-5・sonnet-5-5・fable-5-2・haiku-5-5 と、opencode-go の deepseek-v4.1-flash を確認(decisions/012)
 
 ## 将来メモ(今は検討しない)
 - Meta の Muse や Grok のボットなど、他のエージェントから Pi を呼び出せるようにする(decisions/003)

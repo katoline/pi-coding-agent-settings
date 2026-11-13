@@ -32,3 +32,4 @@ Pi coding agent を使ったハーネス設計について、対話しながら�
 - [009: サブエージェントの方式は保留(方式 A を暫定の前提)](decisions/009-subagent-hold.md)
 - [010: 設定リポジトリを katoline/pi-coding-agent-settings に紐付け、全面的に刷新する](decisions/010-settings-repo-redesign.md)
 - [011: 旧設計をすべて削除し、新しい要件でゼロから作り直す](decisions/011-rebuild-from-scratch.md)
+- [012: ハーネス v1 の実装と、暫定の選択](decisions/012-implementation-v1.md)
