@@ -33,6 +33,8 @@ export interface PlanItem {
 export interface VerificationRecord {
   command: string;
   ok: boolean;
+  /** 検証コマンドが無く、検証できなかった(完了にはできるが、「未検証」と報告し、自動マージはしない) */
+  unverified?: boolean;
   /** 実行したときの、作業ツリーの指紋 */
   fingerprint: string;
   summary: string;

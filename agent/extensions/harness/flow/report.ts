@@ -34,8 +34,10 @@ export function renderReport(plan: Plan): string {
     lines.push(
       "- **未検証**(検証コマンドが無い、または実行していません。自動マージはしていません)",
     );
-  for (const v of plan.verifications)
-    lines.push(`- ${v.ok ? "成功" : "失敗"}: \`${v.command}\` — ${v.summary}`);
+  for (const v of plan.verifications) {
+    const label = v.unverified ? "未検証" : v.ok ? "成功" : "失敗";
+    lines.push(`- ${label}: \`${v.command}\` — ${v.summary}`);
+  }
   const lv = latestVerification(plan);
   if (lv && !lv.ok) lines.push("- 最後の検証は失敗しています。");
 
