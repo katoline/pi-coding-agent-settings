@@ -16,6 +16,7 @@ export const config: HarnessConfig = {
   protectedHarnessPaths: [`${HOME}/.pi/agent`],
   defaultBranches: ["main", "master"],
   dropContextFiles: false,
+  selectModelOnStartup: true,
 };
 
 export function input(over: {

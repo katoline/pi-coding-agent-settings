@@ -1,6 +1,7 @@
 import { realpathSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
+import { SUBAGENT_DEFAULT } from "../models/catalog.ts";
 import { type HarnessConfig, loadConfig } from "./config.ts";
 import type { FsProbe } from "./types.ts";
 
@@ -30,6 +31,8 @@ export interface Runtime {
   /** このハーネスが作った worktree の絶対パス */
   ownedWorktrees: Set<string>;
   run: RunState;
+  /** サブエージェントのモデル(`provider/id`)。`/subagent-model` で変える */
+  subagentModel: string;
 }
 
 export function createRuntime(env: NodeJS.ProcessEnv = process.env): Runtime {
@@ -42,6 +45,7 @@ export function createRuntime(env: NodeJS.ProcessEnv = process.env): Runtime {
     tmpdir: env.TMPDIR || tmpdir(),
     ownedWorktrees: new Set(),
     run: new RunState(),
+    subagentModel: env.PI_SUBAGENT_MODEL || SUBAGENT_DEFAULT,
   };
 }
 

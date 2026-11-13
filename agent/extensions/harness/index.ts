@@ -2,6 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerGuards } from "./guards/register.ts";
 import { registerInstructions } from "./instructions/register.ts";
 import { createRuntime } from "./lib/runtime.ts";
+import { registerModels } from "./models/register.ts";
 import { registerOutput } from "./output/register.ts";
 
 /**
@@ -14,4 +15,5 @@ export default function harness(pi: ExtensionAPI): void {
   registerGuards(pi, rt);
   registerInstructions(pi, rt);
   registerOutput(pi, rt);
+  registerModels(pi, rt);
 }

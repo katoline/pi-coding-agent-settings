@@ -4,5 +4,6 @@
   "protectedGlobalPaths": ["~/Dev/kaishi/ubuntu-dotfiles"],
   "protectedHarnessPaths": ["~/.pi/agent"],
   "defaultBranches": ["main", "master"],
-  "dropContextFiles": false
+  "dropContextFiles": false,
+  "selectModelOnStartup": true
 }
