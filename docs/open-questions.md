@@ -9,7 +9,7 @@
 
 ## リポジトリの刷新(repo-redesign-plan.md / decisions/010)
 - [ ] ubuntu-dotfiles との関係(このリポジトリを設定の正本にするか、dotfiles に統合するか)
-- [ ] 刷新後の既定ブランチ名(現在は `agent/bootstrap-harness`)
+- [x] 既定ブランチ名 → `main`(2026-11-13、ユーザーが GitHub で切り替え。残りの旧ブランチ `agent/bootstrap-harness`・`harness-v2`・`redesign/v2` は、ユーザーが削除する)
 
 ## v1 の実装後に残っている論点(decisions/012)
 - [ ] **サンドボックスの導入**(最優先。ガードは文字列の検査で、OS・VM の境界の代わりにならない)
