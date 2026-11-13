@@ -14,6 +14,8 @@ export interface HarnessConfig {
   protectedHarnessPaths: string[];
   /** 既定ブランチとして扱うブランチ名(origin/HEAD の指す先も加える) */
   defaultBranches: string[];
+  /** プロジェクトの AGENTS.md / CLAUDE.md を、モデルに読ませない */
+  dropContextFiles: boolean;
 }
 
 const here = path.dirname(fileURLToPath(import.meta.url));

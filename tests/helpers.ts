@@ -15,6 +15,7 @@ export const config: HarnessConfig = {
   protectedGlobalPaths: [`${HOME}/Dev/kaishi/ubuntu-dotfiles`],
   protectedHarnessPaths: [`${HOME}/.pi/agent`],
   defaultBranches: ["main", "master"],
+  dropContextFiles: false,
 };
 
 export function input(over: {
