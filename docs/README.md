@@ -12,7 +12,7 @@ Pi coding agent を使ったハーネス設計について、対話しながら�
 - 未決事項は `open-questions.md` で管理する
 
 ## 資料
-- [research/](research/): 先行事例の調査(自律ループ、実践者、サンドボックス、公開されているハーネス、Claude Code と Pi のサブエージェントの違い)
+- [research/](research/): 先行事例の調査(自律ループ、実践者、サンドボックス、公開されているハーネス、Claude Code と Pi のサブエージェントの違い、OpenCode を改造する案との比較)
 - [sandbox-candidates.md](sandbox-candidates.md): サンドボックスの 2 つの候補(Gondolin と bubblewrap 系)の詳しい説明と比較
 - [repo-redesign-plan.md](repo-redesign-plan.md): このリポジトリの刷新計画(旧設計との差、引き継ぐもの・捨てるもの、新しい構成案、作業の段階)
 - [source/pi-harness-requirements.md](source/pi-harness-requirements.md): ユーザーが作成した要件資料(原文)
