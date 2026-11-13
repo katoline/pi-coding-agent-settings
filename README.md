@@ -100,4 +100,5 @@ npm run check   # biome + tsc + テスト(統合テストを含む)
 | [docs/decisions/](docs/decisions/) | 決定記録(1 件 1 ファイル) |
 | [docs/open-questions.md](docs/open-questions.md) | 未決事項 |
 | [docs/feasibility-assessment.md](docs/feasibility-assessment.md) | 要件と Pi の公式ドキュメントの照合 |
+| [docs/learning/](docs/learning/) | **学習教材**(各機能の実装・理由・Claude Code との比較、oh-my-pi を試す手順) |
 | [docs/research/](docs/research/) | 先行事例の調査(自律ループ・実践者・サンドボックス・公開されているハーネス) |
