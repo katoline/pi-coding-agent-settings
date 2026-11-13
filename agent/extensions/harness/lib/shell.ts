@@ -592,7 +592,8 @@ function markAfterCd(parsed: ParseResult): void {
   let seenCd = false;
   for (const cmd of parsed.commands) {
     if (cmd.nested) {
-      cmd.afterCd = seenCd;
+      // `sh -c 'cd x && rm y'` のように、入れ子の中で cd していた場合は、その情報を保つ
+      cmd.afterCd = cmd.afterCd || seenCd;
       continue;
     }
     cmd.afterCd = seenCd;
