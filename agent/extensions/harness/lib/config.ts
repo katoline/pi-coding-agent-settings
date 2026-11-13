@@ -18,6 +18,16 @@ export interface HarnessConfig {
   dropContextFiles: boolean;
   /** 起動時に、メインのモデルを選ばせる */
   selectModelOnStartup: boolean;
+  subagent: {
+    /** 一度に任せられる件数 */
+    maxTasks: number;
+    /** 同時に動かす数 */
+    maxConcurrency: number;
+    /** 1 件あたりの時間切れ(秒) */
+    timeoutSeconds: number;
+    /** このセッションで起動できる合計 */
+    maxTotal: number;
+  };
 }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -42,7 +52,11 @@ export function loadConfig(
   if (existsSync(file)) {
     try {
       const override = JSON.parse(readFileSync(file, "utf8"));
-      merged = { ...defaults, ...override };
+      merged = {
+        ...defaults,
+        ...override,
+        subagent: { ...defaults.subagent, ...(override.subagent ?? {}) },
+      };
     } catch {
       // 壊れた上書きは使わない
     }

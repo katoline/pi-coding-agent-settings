@@ -4,6 +4,7 @@ import { registerInstructions } from "./instructions/register.ts";
 import { createRuntime } from "./lib/runtime.ts";
 import { registerModels } from "./models/register.ts";
 import { registerOutput } from "./output/register.ts";
+import { registerSubagent } from "./subagent/register.ts";
 
 /**
  * Pi ハーネスの入口。ルールは、コンテキスト(AGENTS.md)ではなく、ここで登録するフックと
@@ -16,4 +17,5 @@ export default function harness(pi: ExtensionAPI): void {
   registerInstructions(pi, rt);
   registerOutput(pi, rt);
   registerModels(pi, rt);
+  registerSubagent(pi, rt);
 }

@@ -5,5 +5,11 @@
   "protectedHarnessPaths": ["~/.pi/agent"],
   "defaultBranches": ["main", "master"],
   "dropContextFiles": false,
-  "selectModelOnStartup": true
+  "selectModelOnStartup": true,
+  "subagent": {
+    "maxTasks": 8,
+    "maxConcurrency": 4,
+    "timeoutSeconds": 900,
+    "maxTotal": 64
+  }
 }
