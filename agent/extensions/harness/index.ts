@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { registerFlow } from "./flow/register.ts";
 import { registerGuards } from "./guards/register.ts";
 import { registerInstructions } from "./instructions/register.ts";
 import { createRuntime } from "./lib/runtime.ts";
@@ -18,4 +19,5 @@ export default function harness(pi: ExtensionAPI): void {
   registerOutput(pi, rt);
   registerModels(pi, rt);
   registerSubagent(pi, rt);
+  registerFlow(pi, rt);
 }

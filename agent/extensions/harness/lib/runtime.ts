@@ -1,6 +1,7 @@
 import { realpathSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
+import type { Plan } from "../flow/plan.ts";
 import { SUBAGENT_DEFAULT } from "../models/catalog.ts";
 import { type HarnessConfig, loadConfig } from "./config.ts";
 import type { FsProbe } from "./types.ts";
@@ -39,6 +40,8 @@ export interface Runtime {
   subagentSpawns: number;
   /** サブエージェントが使った費用(ドル)の合計 */
   childCost: number;
+  /** 確定した(または提案中の)計画。セッションのエントリに保存し、復元する */
+  plan: Plan | undefined;
 }
 
 export function createRuntime(env: NodeJS.ProcessEnv = process.env): Runtime {
@@ -55,6 +58,7 @@ export function createRuntime(env: NodeJS.ProcessEnv = process.env): Runtime {
     agentDir: env.PI_CODING_AGENT_DIR || path.join(home, ".pi", "agent"),
     subagentSpawns: 0,
     childCost: 0,
+    plan: undefined,
   };
 }
 
