@@ -35,6 +35,7 @@ export function input(over: {
     config,
     git: {
       inRepo: over.inRepo ?? true,
+      repoRoot: over.inRepo === false ? null : (over.cwd ?? `${HOME}/Dev/seino914/app`),
       currentBranch: over.branch === undefined ? "feat/x" : over.branch,
       defaultBranches: new Set(["main", "master"]),
       mergedRemoteBranches: new Set(over.merged ?? []),

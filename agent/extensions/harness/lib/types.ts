@@ -10,6 +10,8 @@ export interface GuardEnv {
 export interface GitState {
   /** cwd のリポジトリ。リポジトリの外なら false */
   inRepo: boolean;
+  /** リポジトリのルート(`git rev-parse --show-toplevel`) */
+  repoRoot: string | null;
   currentBranch: string | null;
   /** 既定ブランチ(main / master と、origin/HEAD の指す先) */
   defaultBranches: ReadonlySet<string>;
