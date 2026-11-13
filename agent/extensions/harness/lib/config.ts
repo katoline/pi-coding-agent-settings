@@ -16,6 +16,8 @@ export interface HarnessConfig {
   defaultBranches: string[];
   /** プロジェクトの AGENTS.md / CLAUDE.md を、モデルに読ませない */
   dropContextFiles: boolean;
+  /** 起動時に、メインのモデルを選ばせる */
+  selectModelOnStartup: boolean;
 }
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -26,11 +28,17 @@ function expandHome(p: string, home: string): string {
   return p;
 }
 
-/** 既定の設定に、`~/.pi/agent/harness.json` の上書きを重ねる。壊れた上書きは無視して既定を使う */
-export function loadConfig(home: string = homedir(), overridePath?: string): HarnessConfig {
+/** 既定の設定に、`<Pi の設定ディレクトリ>/harness.json`(既定 ~/.pi/agent/harness.json)の上書きを重ねる。壊れた上書きは無視して既定を使う */
+export function loadConfig(
+  home: string = homedir(),
+  overridePath?: string,
+  env: NodeJS.ProcessEnv = process.env,
+): HarnessConfig {
   const defaults = JSON.parse(readFileSync(path.join(here, "..", "config.default.json"), "utf8"));
   let merged: HarnessConfig = defaults;
-  const file = overridePath ?? path.join(home, ".pi", "agent", "harness.json");
+  // Pi の設定ディレクトリ(`PI_CODING_AGENT_DIR`)に従う。既定は ~/.pi/agent
+  const agentDir = env.PI_CODING_AGENT_DIR || path.join(home, ".pi", "agent");
+  const file = overridePath ?? path.join(agentDir, "harness.json");
   if (existsSync(file)) {
     try {
       const override = JSON.parse(readFileSync(file, "utf8"));
